@@ -1,0 +1,15 @@
+name: napari-bioio-reader
+display_name: Bioio Reader
+# use 'hidden' to remove plugin from napari hub search results
+visibility: public
+# see https://napari.org/stable/plugins/technical_references/manifest.html#fields for valid categories
+categories: ["Annotation", "Segmentation", "Acquisition"]
+contributions:
+  commands:
+    - id: napari-bioio-reader.get_reader
+      python_name: napari_bioio_reader._reader:napari_get_reader
+      title: Open data with Bioio Reader
+  readers:
+    - command: napari-bioio-reader.get_reader
+      accepts_directories: false
+      filename_patterns: ['*.npy']
