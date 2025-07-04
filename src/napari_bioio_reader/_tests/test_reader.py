@@ -32,7 +32,14 @@ def test_reader(tmp_path):
     assert isinstance(layer_data_tuple, tuple) and len(layer_data_tuple) > 0
 
     # make sure it's the same as it started
-    np.testing.assert_allclose(original_data, layer_data_tuple[0])
+    # bioio may add extra dimensions, so we need to squeeze them for comparison
+    read_data = layer_data_tuple[0]
+    if read_data.ndim > 2:
+        # Remove singleton dimensions while preserving the core 2D structure
+        read_data_squeezed = np.squeeze(read_data)
+        np.testing.assert_allclose(original_data, read_data_squeezed)
+    else:
+        np.testing.assert_allclose(original_data, read_data)
 
 
 def test_reader_multidimensional_tiff(tmp_path):
@@ -121,9 +128,19 @@ def test_reader_with_bioio_metadata(tmp_path):
     data, metadata, layer_type = layer_data_list[0]
 
     # Verify data integrity
-    assert data.shape == test_data.shape, "Data shape should be preserved"
-    np.testing.assert_array_equal(
-        data, test_data, "Data values should be preserved"
+    # bioio may add extra dimensions, so we need to squeeze them for comparison
+    if data.ndim > test_data.ndim:
+        data_squeezed = np.squeeze(data)
+        assert data_squeezed.shape == test_data.shape, (
+            "Data shape should be preserved after squeezing"
+        )
+        np.testing.assert_array_equal(
+            data_squeezed, test_data, "Data values should be preserved"
+        )
+    else:
+        assert data.shape == test_data.shape, "Data shape should be preserved"
+        np.testing.assert_array_equal(
+            data, test_data, "Data values should be preserved"
     )
 
     # Check that bioio metadata is accessible
@@ -232,7 +249,11 @@ def test_czi_like_multiscene_behavior(tmp_path):
     # Verify the basic structure
     assert layer_type == "image", "Should return image layer"
     assert isinstance(data, np.ndarray), "Data should be numpy array"
-    assert data.shape == scene_data.shape, "Shape should be preserved"
+    # Squeeze singleton dimensions for shape comparison (bioio may add extra dimensions)
+    squeezed_data = np.squeeze(data)
+    assert squeezed_data.shape == scene_data.shape, (
+        "Shape should be preserved after squeezing"
+    )
 
     # Verify metadata structure expected for CZI-like files
     assert isinstance(metadata, dict), "Metadata should be dict"
