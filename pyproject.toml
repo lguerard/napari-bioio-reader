@@ -21,13 +21,19 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 requires-python = ">=3.10"
-dependencies = ["numpy", "bioio", "bioio-bioformats", "scyjava", "napari[all]>=0.6.2,<0.7"]
+dependencies = [
+    "numpy",
+    "bioio",
+    "bioio-bioformats",
+    "scyjava",
+    "napari[all]>=0.6.2,<0.7",
+]
 
 [project.optional-dependencies]
 testing = [
     "tox",
-    "pytest",  # https://docs.pytest.org/en/latest/contents.html
-    "pytest-cov",  # https://pytest-cov.readthedocs.io/en/latest/
+    "pytest",     # https://docs.pytest.org/en/latest/contents.html
+    "pytest-cov", # https://pytest-cov.readthedocs.io/en/latest/
 ]
 
 [project.entry-points."napari.manifest"]
@@ -72,11 +78,11 @@ lint.select = [
     "UP",  # pyupgrade
     "I",   # isort
     "BLE", # flake8-blind-exception
-    "B", # flake8-bugbear
-    "A", # flake8-builtins
-    "C4", # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
     "ISC", # flake8-implicit-str-concat
-    "G", # flake8-logging-format
+    "G",   # flake8-logging-format
     "PIE", # flake8-pie
     "SIM", # flake8-simplify
 ]
@@ -118,7 +124,7 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
-napari-bioio-reader = { path = ".", editable = true }
+napari-bioio-reader = { path = ".", extras = ["testing"], editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
