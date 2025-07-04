@@ -17,7 +17,8 @@ except ImportError:
 def napari_get_reader(path: str):
     """Return a reader function for napari.
 
-    The reader will be default bioio if supported, otherwise using bioio-bioformats.
+    Uses bioio.BioImage.determine_plugin to check if bioio can handle the file format.
+    Only works if bioio is available and the file exists.
 
     Parameters
     ----------
@@ -27,7 +28,8 @@ def napari_get_reader(path: str):
     Returns
     -------
     callable or None
-        A function that returns layer data, or None if the path is not supported.
+        A function that returns layer data, or None if the path is not supported
+        or if bioio is not available.
 
     Examples
     --------
@@ -36,34 +38,46 @@ def napari_get_reader(path: str):
     ...     data = reader('image.tif')
     ...     # Use data in napari
     """
-    # Try default bioio reader
-    try:
-        if bioio.bio_image.BioImage.is_supported_image(path):
-            return bioio_napari_reader
-    except (AttributeError, ImportError):
-        pass
-    # Try bioio-bioformats as fallback
-    try:
-        import bioio_bioformats
+    if not isinstance(path, str):
+        return None
 
-        if bioio_bioformats.Reader.is_supported_image(path):
-            return bioio_napari_reader
+    # First check if bioio is available at all
+    try:
+        import bioio
+    except ImportError:
+        return None
+
+    # Use bioio.BioImage.determine_plugin to check if any plugin can handle this file
+    try:
+        # First check if the file exists
+        if not os.path.isfile(path):
+            return None
+
+        # Check if determine_plugin method exists
+        if not hasattr(bioio.BioImage, "determine_plugin"):
+            return None
+
+        plugin = bioio.BioImage.determine_plugin(path)
+
+        # If determine_plugin returns None, no plugin can handle this file
+        if plugin is None:
+            return None
+
+        # If we get a plugin, bioio can handle this file
+        return bioio_napari_reader
+
     except (
         AttributeError,
         ImportError,
+        ValueError,
         RuntimeError,
         FileNotFoundError,
         OSError,
         UnsupportedFileFormatError,
+        Exception,  # Catch any other unexpected exceptions
     ):
-        # Catch various exceptions that can occur:
-        # - AttributeError/ImportError: bioio_bioformats not available or incomplete
-        # - RuntimeError: JVM initialization errors
-        # - FileNotFoundError: File doesn't exist (for test cases with fake files)
-        # - OSError: JVM DLL not found or other system-level errors
-        # - UnsupportedFileFormatError: bioio_bioformats doesn't support the file format
-        pass
-    return None
+        # If determine_plugin fails for any reason, return None
+        return None
 
 
 def bioio_napari_reader(path: str) -> list[Any]:
@@ -73,6 +87,7 @@ def bioio_napari_reader(path: str) -> list[Any]:
     Returns all scenes in the image as individual napari layers.
     Automatically tries default bioio first, then falls back to bioio-bioformats.
     Uses actual scene names from metadata when available, otherwise falls back to numbered scenes.
+    Only works if bioio or bioio-bioformats are available.
 
     Parameters
     ----------
@@ -88,6 +103,13 @@ def bioio_napari_reader(path: str) -> list[Any]:
         For multi-scene images, metadata contains:
         - 'bioio_metadata': Original bioio metadata
         - 'scene_info': Dict with scene_id, scene_index, scene_name, and total_scenes
+
+    Raises
+    ------
+    ImportError
+        If neither bioio nor bioio-bioformats are available.
+    RuntimeError
+        If both bioio and bioio-bioformats fail to read the image.
 
     Examples
     --------
@@ -194,7 +216,7 @@ def bioio_napari_reader(path: str) -> list[Any]:
 
     # Try default bioio reader first
     try:
-        img = bioio.bio_image.BioImage(path)
+        img = bioio.BioImage(path)
     except (ImportError, AttributeError, OSError, ValueError, RuntimeError):
         # Fall back to bioio-bioformats
         try:
