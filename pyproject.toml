@@ -36,6 +36,11 @@ testing = [
 [project.entry-points."napari.manifest"]
 napari-bioio-reader = "napari_bioio_reader:napari.yaml"
 
+[project.urls]
+"Bug Tracker" = "https://github.com/lguerard/napari-bioio-reader/issues"
+"Documentation" = "https://github.com/lguerard/napari-bioio-reader#README.md"
+"Source Code" = "https://github.com/lguerard/napari-bioio-reader"
+"User Support" = "https://github.com/lguerard/napari-bioio-reader/issues"
 
 
 [build-system]
