@@ -8,12 +8,18 @@ from napari_bioio_reader import napari_get_reader
 
 # tmp_path is a pytest fixture
 def test_reader(tmp_path):
-    """Test basic reader functionality with numpy format."""
+    """Test basic reader functionality with TIFF format."""
+    if not importlib.util.find_spec("tifffile"):
+        pytest.skip("tifffile not available for this test")
 
-    # write some fake data using your supported file format
-    my_test_file = str(tmp_path / "myfile.npy")
-    original_data = np.random.rand(20, 20)
-    np.save(my_test_file, original_data)
+    import tifffile
+
+    # write some fake data using TIFF format (bioio definitely supports this)
+    my_test_file = str(tmp_path / "myfile.tif")
+    original_data = np.random.randint(0, 255, (20, 20), dtype=np.uint8)
+
+    # Save as TIFF
+    tifffile.imwrite(my_test_file, original_data)
 
     # try to read it back in
     reader = napari_get_reader(my_test_file)
